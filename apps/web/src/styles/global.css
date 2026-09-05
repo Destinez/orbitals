@@ -1,0 +1,153 @@
+@import 'tailwindcss';
+
+/* The site only uses Latin text. Avoid shipping unused CJK/Vietnamese and
+   Cyrillic font subsets in the initial CSS and font preload graph. */
+@import '@fontsource/ibm-plex-mono/latin-400.css';
+@import '@fontsource/ibm-plex-mono/latin-500.css';
+
+@font-face {
+  font-family: 'Space Grotesk Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300 700;
+  src: url('@fontsource-variable/space-grotesk/files/space-grotesk-latin-wght-normal.woff2')
+    format('woff2-variations');
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Design tokens — sampled from the collection itself.
+   Background is the exact art background: rgb(4,5,10).
+   Chrome is strictly black & white. The only colour on screen
+   is --color-signal, set per chapter from the palette table.
+   ───────────────────────────────────────────────────────────── */
+@theme {
+  --color-void: #04050a;
+  --color-void-lift: #090b12;
+  --color-ink: #ffffff;
+  --color-ink-2: #9aa0ac;
+  --color-ink-3: #4a505c;
+  --color-rule: rgba(255, 255, 255, 0.14);
+
+  --font-mono:
+    'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-display:
+    'Space Grotesk Variable', 'Space Grotesk', ui-sans-serif, system-ui,
+    sans-serif;
+
+  --text-log: 0.6875rem;
+  --text-log--line-height: 1.45;
+
+  --tracking-log: 0.18em;
+  --tracking-display: -0.02em;
+
+  --ease-instrument: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  :root {
+    /* Live signal colour. Driven imperatively per chapter — never a
+       React re-render, just a custom property write on <html>. */
+    --signal: #50c8ff;
+    --signal-rgb: 80 200 255;
+
+    color-scheme: dark;
+  }
+
+  html {
+    background-color: var(--color-void);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-void);
+    color: var(--color-ink);
+    font-family: var(--font-mono);
+    overflow-x: hidden;
+  }
+
+  /* Canvas layers are decorative instrument output. */
+  canvas {
+    display: block;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--signal) 30%, transparent);
+    color: #fff;
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--color-ink);
+    outline-offset: 3px;
+  }
+}
+
+@layer utilities {
+  /* Uppercase, wide-tracked instrument label. Used for every HUD
+     readout and log annotation in the site. */
+  .log {
+    font-family: var(--font-mono);
+    font-size: var(--text-log);
+    line-height: 1.45;
+    letter-spacing: var(--tracking-log);
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Numeric readouts must not reflow as digits change. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  .signal-text {
+    color: var(--signal);
+  }
+
+  .signal-glow {
+    text-shadow:
+      0 0 12px color-mix(in srgb, var(--signal) 55%, transparent),
+      0 0 40px color-mix(in srgb, var(--signal) 22%, transparent);
+  }
+
+  /* ── printed transcript ──────────────────────────────────────────
+     Phosphor bloom and a hard block cursor. Kept subtle: the text has
+     to stay comfortably readable for three paragraphs at a time, which
+     rules out heavy glow or per-character jitter. */
+  .terminal-line {
+    font-family: var(--font-mono);
+    text-shadow: 0 0 14px rgba(255, 255, 255, 0.16);
+    text-wrap: pretty;
+  }
+
+  .terminal-cursor {
+    animation: terminal-blink 1.05s steps(1) infinite;
+  }
+
+  @keyframes terminal-blink {
+    0%,
+    49% {
+      opacity: inherit;
+    }
+    50%,
+    100% {
+      opacity: 0.15;
+    }
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Reduced motion: the story must remain fully readable and
+   fully legible with every scrubbed transform disabled.
+   ───────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

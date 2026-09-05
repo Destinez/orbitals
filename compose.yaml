@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: resonance-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: resonance
+      POSTGRES_USER: resonance
+      POSTGRES_PASSWORD: resonance_local
+    ports:
+      - "5432:5432"
+    volumes:
+      - resonance-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U resonance -d resonance"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  resonance-postgres-data:

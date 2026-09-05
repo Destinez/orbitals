@@ -1,0 +1,13 @@
+{
+  "name": "@resonance/generator",
+  "private": true,
+  "version": "0.1.0",
+  "type": "commonjs",
+  "scripts": {
+    "generate": "node src/orbitalHarnessParallel.js",
+    "preview": "node src/orbitalPreview.js"
+  },
+  "dependencies": {
+    "pngjs": "^7.0.0"
+  }
+}

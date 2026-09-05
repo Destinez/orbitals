@@ -1,0 +1,32 @@
+# Render Blueprint — Orbitals API
+# Dashboard: New → Blueprint → connect repo, or link this file from an existing Web Service.
+#
+# Use Starter plan or higher for campaign traffic — the free tier sleeps after idle.
+
+services:
+  - type: web
+    name: orbitals-api
+    runtime: node
+    rootDir: apps/api
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: COOKIE_SAME_SITE
+        value: None
+      - key: PG_POOL_MAX
+        value: "8"
+      - key: WEB_ORIGIN
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: X_CAMPAIGN_POST_URL
+        sync: false
+      - key: X_ORBITALS_ACCOUNT_URL
+        value: https://x.com/orbitals_nft

@@ -1,0 +1,31 @@
+{
+  "name": "@resonance/trailer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "audio": "node scripts/make-audio.mjs",
+    "typecheck": "tsc --noEmit",
+    "studio": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts ResonanceTrailer out/resonance-trailer.mp4 --gl=angle",
+    "still": "remotion still src/index.ts ResonanceTrailer out/resonance-trailer.png --gl=angle"
+  },
+  "dependencies": {
+    "@react-three/fiber": "^9.7.0",
+    "@remotion/cli": "^4.0.0",
+    "@remotion/google-fonts": "^4.0.520",
+    "@remotion/player": "^4.0.0",
+    "@remotion/three": "^4.0.520",
+    "postprocessing": "^6.39.4",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "remotion": "^4.0.0",
+    "three": "^0.185.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "@types/three": "^0.185.4",
+    "typescript": "^7.0.2"
+  }
+}

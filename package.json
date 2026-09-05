@@ -1,0 +1,31 @@
+{
+  "name": "resonance",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Resonance NFT artwork, campaign site, and observer registry",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace @resonance/web",
+    "dev:api": "npm run dev --workspace @resonance/api",
+    "db:migrate": "npm run db:migrate --workspace @resonance/api",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f postgres",
+    "build": "npm run build --workspace @resonance/web",
+    "test": "npm run test --workspace @resonance/api",
+    "typecheck": "npm run typecheck --workspace @resonance/web",
+    "verify:render": "npm run verify:render --workspace @resonance/web",
+    "generate": "npm run generate --workspace @resonance/generator"
+    ,"trailer:studio": "npm run studio --workspace @resonance/trailer"
+    ,"trailer:render": "npm run render --workspace @resonance/trailer"
+    ,"trailer:still": "npm run still --workspace @resonance/trailer"
+    ,"trailer:audio": "npm run audio --workspace @resonance/trailer"
+    ,"trailer:typecheck": "npm run typecheck --workspace @resonance/trailer"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

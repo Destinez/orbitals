@@ -1,0 +1,20 @@
+# Dependencies and build caches
+node_modules/
+dist/
+*.tsbuildinfo
+.vite/
+
+# Local configuration and runtime data
+.env
+.env.*
+!.env.example
+data/
+
+# Generated and local artifacts
+artifacts/
+apps/trailer/out/
+.shots/
+
+# OS and editor files
+.DS_Store
+*.swp
