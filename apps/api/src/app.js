@@ -1,4 +1,5 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
+import { campaignPayload, parsePostUrl } from './campaign.js';
 import { clearSessionCookie, createSession, readSession, sessionCookie } from './session.js';
 import { clientIp } from './rateLimit.js';
 
@@ -21,7 +22,20 @@ export function createApp({ config, store, rateLimiters, now = Date.now }) {
         if (rateLimiters && !rateLimiters.me(`${ip}:me`)) {
           return json(response, 429, { error: 'Too many requests. Try again shortly.' });
         }
-        return json(response, 200, publicParticipant(participant, config));
+        return json(response, 200, await publicParticipant(participant, config, store));
+      }
+      if (request.method === 'PUT' && url.pathname === '/api/campaign') {
+        if (!authorizeCampaignAdmin(request, config)) {
+          return json(response, 401, { error: 'Campaign admin secret required.' });
+        }
+        const body = await readJson(request);
+        const postUrl = body.postUrl === undefined ? undefined : parsePostUrl(body.postUrl);
+        if (body.postUrl !== undefined && !postUrl) {
+          return json(response, 400, { error: 'Enter a public x.com status URL.' });
+        }
+        const accountUrl = typeof body.accountUrl === 'string' ? body.accountUrl.trim() : undefined;
+        const saved = await store.saveCampaign({ postUrl, accountUrl });
+        return json(response, 200, { campaign: campaignPayload(saved, config) });
       }
       if (request.method === 'POST' && url.pathname === '/api/register') {
         if (rateLimiters && !rateLimiters.register(`${ip}:register`)) {
@@ -36,7 +50,7 @@ export function createApp({ config, store, rateLimiters, now = Date.now }) {
         try {
           const created = await store.create({ id: randomUUID(), username, walletAddress, createdAt: new Date(now()).toISOString() });
           setUserSession(response, created.id, config, now);
-          return json(response, 201, publicParticipant(created, config));
+          return json(response, 201, await publicParticipant(created, config, store));
         } catch (error) {
           if (error.code === '23505') return json(response, 409, { error: 'That X identity or wallet is already recorded.' });
           throw error;
@@ -62,7 +76,7 @@ export function createApp({ config, store, rateLimiters, now = Date.now }) {
           return json(response, 400, { error: 'The quote link must belong to your registered X username.' });
         }
         const updated = await store.saveQuote(participant.id, quote.url, new Date(now()).toISOString());
-        return json(response, 200, publicParticipant(updated, config));
+        return json(response, 200, await publicParticipant(updated, config, store));
       }
       return json(response, 404, { error: 'Not found.' });
     } catch (error) {
@@ -72,14 +86,25 @@ export function createApp({ config, store, rateLimiters, now = Date.now }) {
   };
 }
 
-function publicParticipant(participant, config) {
+async function publicParticipant(participant, config, store) {
+  const row = store.getCampaign ? await store.getCampaign() : null;
   return {
     registered: Boolean(participant),
     username: participant?.username ?? '',
     walletAddress: participant?.walletAddress ?? '',
     quoteUrl: participant?.quoteUrl ?? '',
-    campaign: { postUrl: config.campaignPostUrl, accountUrl: config.orbitalsAccountUrl },
+    campaign: campaignPayload(row, config),
   };
+}
+
+function authorizeCampaignAdmin(request, config) {
+  const secret = config.campaignAdminSecret;
+  if (!secret) return false;
+  const header = request.headers.authorization ?? '';
+  const expected = `Bearer ${secret}`;
+  const a = Buffer.from(header);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 function normalizeUsername(value) {
@@ -115,8 +140,8 @@ function setCors(request, response, origin) {
     response.setHeader('access-control-allow-credentials', 'true');
     response.setHeader('vary', 'Origin');
   }
-  response.setHeader('access-control-allow-methods', 'GET, POST, OPTIONS');
-  response.setHeader('access-control-allow-headers', 'content-type');
+  response.setHeader('access-control-allow-methods', 'GET, POST, PUT, OPTIONS');
+  response.setHeader('access-control-allow-headers', 'content-type, authorization');
   response.setHeader('x-content-type-options', 'nosniff');
   response.setHeader('referrer-policy', 'strict-origin-when-cross-origin');
 }

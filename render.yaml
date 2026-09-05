@@ -26,7 +26,7 @@ services:
         generateValue: true
       - key: DATABASE_URL
         sync: false
-      - key: X_CAMPAIGN_POST_URL
-        sync: false
       - key: X_ORBITALS_ACCOUNT_URL
         value: https://x.com/orbitals_nft
+      - key: CAMPAIGN_ADMIN_SECRET
+        generateValue: true

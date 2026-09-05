@@ -31,6 +31,7 @@ test('public API exposes health and anonymous campaign state', async () => {
       campaign: {
         postUrl: 'https://x.com/orbitals/status/1',
         accountUrl: 'https://x.com/orbitals',
+        postLive: true,
       },
     });
   } finally {

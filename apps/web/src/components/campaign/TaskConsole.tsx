@@ -8,7 +8,7 @@ interface CampaignState {
   username: string;
   walletAddress: string;
   quoteUrl: string;
-  campaign: { postUrl: string; accountUrl: string };
+  campaign: { postUrl: string; accountUrl: string; postLive: boolean };
 }
 
 const TASKS = [
@@ -43,12 +43,9 @@ const FALLBACK_CAMPAIGN: CampaignState = {
   walletAddress: "",
   quoteUrl: "",
   campaign: {
-    postUrl:
-      import.meta.env.VITE_X_CAMPAIGN_POST_URL ??
-      "https://x.com/orbitals_nft/status/00000000000",
-    accountUrl:
-      import.meta.env.VITE_X_ORBITALS_ACCOUNT_URL ??
-      "https://x.com/orbitals_nft",
+    postUrl: "",
+    accountUrl: "https://x.com/orbitals_nft",
+    postLive: false,
   },
 };
 
@@ -86,7 +83,9 @@ export default function TaskConsole() {
         [task.key]: "done",
       };
       const following = TASKS[index + 1];
-      if (following) next[following.key] = "ready";
+      if (following && (following.key === "follow" || campaign.campaign.postLive)) {
+        next[following.key] = "ready";
+      }
       window.localStorage.setItem(
         "resonance-signal-progress",
         JSON.stringify(next),
@@ -128,36 +127,42 @@ export default function TaskConsole() {
       }
     }
 
-    void request<CampaignState>("/api/me")
-      .then((data) => {
-        setCampaign(data);
-        if (data.registered) {
-          const completed = {
-            follow: "done",
-            like: "done",
-            repost: "done",
-            quote: "done",
-          } as const;
-          setTasks(completed);
-          window.localStorage.setItem(
-            "resonance-signal-progress",
-            JSON.stringify(completed),
-          );
-        }
-        setUsername(data.username);
-        setWalletAddress(data.walletAddress);
-        setQuoteUrl(data.quoteUrl);
-        setNotice(
-          data.quoteUrl
-            ? "Record received. Awaiting review."
-            : "Complete the signal path to open the observer record.",
+    const applyStation = (data: CampaignState): void => {
+      setCampaign(data);
+      if (data.registered) {
+        const completed = {
+          follow: "done",
+          like: "done",
+          repost: "done",
+          quote: "done",
+        } as const;
+        setTasks(completed);
+        window.localStorage.setItem(
+          "resonance-signal-progress",
+          JSON.stringify(completed),
         );
-      })
-      .catch(() =>
-        setNotice(
-          "Station link offline. Social tasks still open; filing requires the API.",
-        ),
-      );
+      } else {
+        setTasks((current) => gateTasks(current, data.campaign.postLive));
+      }
+      setUsername(data.username);
+      setWalletAddress(data.walletAddress);
+      setQuoteUrl(data.quoteUrl);
+      setNotice(stationNotice(data));
+    };
+
+    const pullStation = (): void => {
+      void request<CampaignState>("/api/me")
+        .then(applyStation)
+        .catch(() =>
+          setNotice(
+            "Station link offline. Follow stays open; like and quote wait for the post.",
+          ),
+        );
+    };
+
+    pullStation();
+    const poll = window.setInterval(pullStation, 20_000);
+    return () => window.clearInterval(poll);
   }, []);
 
   useEffect(() => {
@@ -434,7 +439,7 @@ export default function TaskConsole() {
         </div>
         <div className="border-l border-white/20 pl-4">
           <p className="mt-1 text-[0.65rem] leading-5 text-white/50">
-            Keep watching the <a href="https://x.com/orbitals_nft" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Orbitals</a> Station. Every activity logged there brings you closer to being chosen. Remember, the margin for error in the cosmos is zero. 
+            Keep watching the <a href={campaign.campaign.accountUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Orbitals</a> Station. Every activity logged there brings you closer to being chosen. Remember, the margin for error in the cosmos is zero. 
 
           </p>
         </div>
@@ -446,6 +451,29 @@ export default function TaskConsole() {
       </div>
     </section>
   );
+}
+
+function gateTasks(
+  tasks: Record<string, TaskStatus>,
+  postLive: boolean,
+): Record<string, TaskStatus> {
+  const next = { ...tasks };
+  if (!postLive) {
+    for (const key of ["like", "repost", "quote"] as const) {
+      if (next[key] !== "done") next[key] = "locked";
+    }
+    return next;
+  }
+  if (next.follow === "done" && next.like === "locked") next.like = "ready";
+  return next;
+}
+
+function stationNotice(data: CampaignState): string {
+  if (data.quoteUrl) return "Record received. Awaiting review.";
+  if (!data.campaign.postLive) {
+    return "Follow is open. Like, repost, and quote unlock when the station posts.";
+  }
+  return "Complete the signal path to open the observer record.";
 }
 
 function statusLabel(status: TaskStatus): string {

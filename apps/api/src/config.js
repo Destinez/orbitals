@@ -3,18 +3,27 @@ const integer = (value, fallback) => {
   return Number.isInteger(parsed) ? parsed : fallback;
 };
 
+export function normalizeWebOrigin(value, { forceHttps = false } = {}) {
+  const origin = (value ?? '').trim().replace(/\/$/, '');
+  if (forceHttps && origin.startsWith('http://')) return `https://${origin.slice('http://'.length)}`;
+  return origin;
+}
+
 export function loadConfig(env = process.env) {
   const port = integer(env.PORT, 8787);
   const cookieSameSite = env.COOKIE_SAME_SITE === 'None' ? 'None' : 'Lax';
+  const secureCookies = env.NODE_ENV === 'production';
   return {
     port,
-    webOrigin: env.WEB_ORIGIN ?? 'http://localhost:5173',
+    webOrigin: normalizeWebOrigin(env.WEB_ORIGIN ?? 'http://localhost:5173', {
+      forceHttps: secureCookies && cookieSameSite === 'None',
+    }),
     sessionSecret: env.SESSION_SECRET ?? '',
-    campaignPostUrl:
-      env.X_CAMPAIGN_POST_URL ?? 'https://x.com/orbitals_nft/status/0000000000000000000',
+    campaignPostUrl: env.X_CAMPAIGN_POST_URL ?? '',
     orbitalsAccountUrl: env.X_ORBITALS_ACCOUNT_URL ?? 'https://x.com/orbitals_nft',
+    campaignAdminSecret: env.CAMPAIGN_ADMIN_SECRET ?? '',
     databaseUrl: env.DATABASE_URL ?? '',
-    secureCookies: env.NODE_ENV === 'production',
+    secureCookies,
     cookieSameSite,
     pgPoolMax: integer(env.PG_POOL_MAX, 10),
     rateLimitWindowMs: integer(env.RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000),

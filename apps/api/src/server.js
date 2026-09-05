@@ -8,10 +8,9 @@ import { ParticipantStore } from './store.js';
 const config = loadConfig();
 const missing = validateConfig(config);
 if (missing.length) {
-  console.warn(`Orbitals API configuration incomplete: ${missing.join(', ')}`);
+  console.error(`Orbitals API cannot start. Fix these env vars: ${missing.join(', ')}`);
+  process.exit(1);
 }
-
-if (missing.length) process.exit(1);
 
 const pool = createPool(config.databaseUrl, { max: config.pgPoolMax });
 const store = new ParticipantStore(pool);

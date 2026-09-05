@@ -45,7 +45,7 @@ Expected traffic pattern: most users hit `/api/me` once, complete 4 client tasks
 3. Fill in sync variables when prompted:
    - `WEB_ORIGIN` → `https://your-hostinger-domain.com`
    - `DATABASE_URL` → Neon pooled string
-   - `X_CAMPAIGN_POST_URL` → real campaign post
+   - `CAMPAIGN_ADMIN_SECRET` is generated — copy it; you use it later to set the X post URL
 4. Confirm **Starter** plan (change from free in the service settings if needed).
 5. Deploy.
 
@@ -65,8 +65,8 @@ Expected traffic pattern: most users hit `/api/me` once, complete 4 client tasks
 | `SESSION_SECRET` | `openssl rand -base64 48` |
 | `DATABASE_URL` | Neon **pooled** connection string |
 | `COOKIE_SAME_SITE` | `None` |
-| `X_CAMPAIGN_POST_URL` | Real post URL |
 | `X_ORBITALS_ACCOUNT_URL` | `https://x.com/orbitals_nft` |
+| `CAMPAIGN_ADMIN_SECRET` | Long random secret — used to publish the post URL later |
 | `PG_POOL_MAX` | `8` (optional) |
 | `RATE_LIMIT_REGISTER` | `5` per IP per 15 min (optional) |
 | `RATE_LIMIT_QUOTE` | `8` per IP per 15 min (optional) |
@@ -86,9 +86,9 @@ Set in `.env.production`:
 
 ```env
 VITE_API_URL=https://orbitals-api.onrender.com
-VITE_X_CAMPAIGN_POST_URL=<same as API>
-VITE_X_ORBITALS_ACCOUNT_URL=https://x.com/orbitals_nft
 ```
+
+Do **not** put the X post URL in the frontend build. After you post, update Neon via `PUT /api/campaign` (see [environment.md](./environment.md)).
 
 ```bash
 npm run build

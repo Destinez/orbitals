@@ -8,10 +8,22 @@ export function needsSsl(connectionString) {
   );
 }
 
+/** node-pg cannot satisfy Neon's channel_binding=require. */
+export function normalizeDatabaseUrl(connectionString) {
+  try {
+    const url = new URL(connectionString);
+    url.searchParams.delete('channel_binding');
+    return url.toString();
+  } catch {
+    return connectionString.replace(/([?&])channel_binding=[^&]*&?/i, '$1').replace(/[?&]$/, '');
+  }
+}
+
 export function createPool(connectionString, { max = 10 } = {}) {
-  const ssl = needsSsl(connectionString) ? { rejectUnauthorized: false } : undefined;
+  const normalized = normalizeDatabaseUrl(connectionString);
+  const ssl = needsSsl(normalized) ? { rejectUnauthorized: false } : undefined;
   return new pg.Pool({
-    connectionString,
+    connectionString: normalized,
     ssl,
     max,
     idleTimeoutMillis: 30_000,
