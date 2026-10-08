@@ -8,11 +8,13 @@ dist/
 .env
 .env.*
 !.env.example
+!.env.production.example
 data/
 
 # Generated and local artifacts
 artifacts/
 apps/trailer/out/
+apps/trailer/public/telemetry.wav
 .shots/
 
 # OS and editor files
